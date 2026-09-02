@@ -3,7 +3,7 @@
 	"appName": "PMUPredict",
 	"webDir": "dist",
 	"server": {
-		"url": "https://pmupredict-frontend-sory215-dev.vercel.app",
+		"url": "https://pmupredict-frontend-syn4.vercel.app",
 		"cleartext": false,
 		"androidScheme": "https"
 	},
