@@ -1,0 +1,13 @@
+{
+	"appId": "com.pmupredict.app",
+	"appName": "PMUPredict",
+	"webDir": "dist",
+	"server": {
+		"url": "https://pmupredict-frontend-sory215-dev.vercel.app",
+		"cleartext": false,
+		"androidScheme": "https"
+	},
+	"android": {
+		"allowMixedContent": false
+	}
+}
