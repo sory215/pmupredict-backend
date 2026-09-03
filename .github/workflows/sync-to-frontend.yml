@@ -1,4 +1,4 @@
-name: Sync to pmupredict-frontend (sync4)
+name: Sync to pmupredict-frontend (syn4)
 
 on:
   push:
@@ -29,8 +29,8 @@ jobs:
         run: |
           git clone https://x-access-token:${{ secrets.PERSONAL_TOKEN }}@github.com/${{ env.TARGET_REPO }} target || exit 1
           cd target
-          # create or reset branch sync4
-          git checkout -B sync4
+          # create or reset branch syn4
+          git checkout -B syn4
 
       - name: Copy files to target repo
         env:
@@ -43,7 +43,7 @@ jobs:
             --exclude='node_modules' \
             "${SRC}/" target/
 
-      - name: Commit & push changes to sync4
+      - name: Commit & push changes to syn4
         env:
           TARGET_REPO: sory215/pmupredict-frontend
         run: |
@@ -53,5 +53,5 @@ jobs:
             echo "No changes to commit"
           else
             git commit -m "Sync from pmupredict @${{ github.sha }}"
-            git push https://x-access-token:${{ secrets.PERSONAL_TOKEN }}@github.com/${{ env.TARGET_REPO }} HEAD:sync4 --force
+            git push https://x-access-token:${{ secrets.PERSONAL_TOKEN }}@github.com/${{ env.TARGET_REPO }} HEAD:syn4 --force
           fi
