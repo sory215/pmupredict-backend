@@ -1,7 +1,7 @@
-Triggered workflow run
+Triggered workflow run (updated)
 
-This file was added to trigger the "Sync to pmupredict-frontend (syn4)" workflow.
+This file was updated to retrigger the "Sync to pmupredict-frontend (syn4)" workflow.
 
-Date: 2026-09-03
+Date: 2026-09-03 11:10:00 UTC
 
 If you want to remove this file later, delete .github/sync-trigger.txt
