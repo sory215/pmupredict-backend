@@ -1,0 +1,56 @@
+name: Sync to pmupredict-frontend (sync4)
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout source repo (pmupredict)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure git user
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Clone target repo (pmupredict-frontend)
+        env:
+          TARGET_REPO: sory215/pmupredict-frontend
+        run: |
+          git clone https://x-access-token:${{ secrets.PERSONAL_TOKEN }}@github.com/${{ env.TARGET_REPO }} target || exit 1
+          cd target
+          # create or reset branch sync4
+          git checkout -B sync4
+
+      - name: Copy files to target repo
+        env:
+          SRC: ${{ github.workspace }}
+        run: |
+          # from runner root, source is the checked out pmupredict repo ($GITHUB_WORKSPACE)
+          rsync -av --delete \
+            --exclude='.git' \
+            --exclude='.github/workflows' \
+            --exclude='node_modules' \
+            "${SRC}/" target/
+
+      - name: Commit & push changes to sync4
+        env:
+          TARGET_REPO: sory215/pmupredict-frontend
+        run: |
+          cd target
+          git add -A
+          if git diff-index --quiet HEAD --; then
+            echo "No changes to commit"
+          else
+            git commit -m "Sync from pmupredict @${{ github.sha }}"
+            git push https://x-access-token:${{ secrets.PERSONAL_TOKEN }}@github.com/${{ env.TARGET_REPO }} HEAD:sync4 --force
+          fi
