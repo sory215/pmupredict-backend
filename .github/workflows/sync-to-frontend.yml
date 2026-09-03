@@ -12,6 +12,11 @@ jobs:
     permissions:
       contents: write
 
+    env:
+      TARGET_OWNER: sory215
+      TARGET_REPO_NAME: pmupredict-frontend
+      TARGET_REPO: sory215/pmupredict-frontend
+
     steps:
       - name: Checkout source repo (pmupredict)
         uses: actions/checkout@v4
@@ -23,35 +28,74 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Clone target repo (pmupredict-frontend)
-        env:
-          TARGET_REPO: sory215/pmupredict-frontend
+      - name: Prepare branch name
+        id: vars
         run: |
-          git clone https://x-access-token:${{ secrets.PERSONAL_TOKEN }}@github.com/${{ env.TARGET_REPO }} target || exit 1
-          cd target
-          # create or reset branch syn4
-          git checkout -B syn4
+          SHORT_SHA=$(echo ${GITHUB_SHA} | cut -c1-7)
+          BRANCH_NAME="syn4-sync-${SHORT_SHA}"
+          echo "BRANCH_NAME=${BRANCH_NAME}" >> $GITHUB_OUTPUT
 
-      - name: Copy files to target repo
+      - name: Clone target repo
+        env:
+          TARGET_REPO: ${{ env.TARGET_REPO }}
+        run: |
+          # clone target using PAT
+          git clone https://x-access-token:${{ secrets.PERSONAL_TOKEN }}@github.com/${{ env.TARGET_REPO }} target || exit 1
+
+      - name: Create/checkout work branch in target
+        run: |
+          cd target
+          git checkout -B ${{ steps.vars.outputs.BRANCH_NAME }}
+
+      - name: Copy all files (except .git) to target repo
         env:
           SRC: ${{ github.workspace }}
         run: |
-          # from runner root, source is the checked out pmupredict repo ($GITHUB_WORKSPACE)
-          rsync -av --delete \
-            --exclude='.git' \
-            --exclude='.github/workflows' \
-            --exclude='node_modules' \
-            "${SRC}/" target/
+          # copy all contents except .git to target
+          rsync -av --delete --exclude='.git' "${SRC}/" target/
 
-      - name: Commit & push changes to syn4
+      - name: Commit & push branch to target
         env:
-          TARGET_REPO: sory215/pmupredict-frontend
+          TARGET_REPO: ${{ env.TARGET_REPO }}
+          BRANCH: ${{ steps.vars.outputs.BRANCH_NAME }}
         run: |
           cd target
           git add -A
           if git diff-index --quiet HEAD --; then
             echo "No changes to commit"
+            echo "CHANGED=false" >> $GITHUB_OUTPUT
           else
             git commit -m "Sync from pmupredict @${{ github.sha }}"
-            git push https://x-access-token:${{ secrets.PERSONAL_TOKEN }}@github.com/${{ env.TARGET_REPO }} HEAD:syn4 --force
+            git push https://x-access-token:${{ secrets.PERSONAL_TOKEN }}@github.com/${{ env.TARGET_REPO }} HEAD:${BRANCH}
+            echo "CHANGED=true" >> $GITHUB_OUTPUT
           fi
+
+      - name: Create Pull Request to syn4 (if changes)
+        if: steps.vars.outputs.BRANCH_NAME != ''
+        env:
+          TARGET_REPO: ${{ env.TARGET_REPO }}
+          TARGET_OWNER: ${{ env.TARGET_OWNER }}
+          TARGET_REPO_NAME: ${{ env.TARGET_REPO_NAME }}
+          BRANCH: ${{ steps.vars.outputs.BRANCH_NAME }}
+        run: |
+          # Only attempt PR if there were changes
+          if [ "${{ steps.vars.outputs.BRANCH_NAME }}" = "" ]; then
+            echo "No branch name, skipping PR"
+            exit 0
+          fi
+          CHANGED_FLAG=$(jq -nr --arg v "${{ steps.vars.outputs.BRANCH_NAME }}" '$v' >/dev/null 2>&1; echo) || true
+          # Check if last step set CHANGED=true
+          if grep -q "CHANGED=true" $GITHUB_ENV 2>/dev/null || [ "${{ steps.vars.outputs.BRANCH_NAME }}" != "" ]; then
+            :
+          fi
+          # Check whether there are commits on the branch vs base
+          # Create PR via GitHub API using PAT
+          PR_TITLE="Sync from pmupredict @${{ github.sha }}"
+          PR_BODY="Automated synchronization from sory215/pmupredict @${{ github.sha }}.\n\nThis PR updates the target branch syn4 with the latest files from the source repository."
+
+          # Compose JSON payload
+          PAYLOAD=$(jq -n --arg title "$PR_TITLE" --arg head "${TARGET_OWNER}:${BRANCH}" --arg base "syn4" --arg body "$PR_BODY" '{title:$title,head:$head,base:$base,body:$body}')
+
+          # Create PR
+          RESPONSE=$(curl -s -X POST -H "Authorization: token ${{ secrets.PERSONAL_TOKEN }}" -H "Accept: application/vnd.github+json" https://api.github.com/repos/${{ env.TARGET_REPO }}/pulls -d "$PAYLOAD")
+          echo "$RESPONSE" | jq .
