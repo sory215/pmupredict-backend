@@ -1,0 +1,83 @@
+name: Sync to pmupredict-frontend — INCLUDE .git (DANGEROUS)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type YES to confirm you understand the risks and want to copy .git (destructive)'
+        required: true
+        default: 'NO'
+
+permissions:
+  contents: write
+
+jobs:
+  include-git:
+    if: "github.event.inputs.confirm == 'YES'"
+    runs-on: ubuntu-latest
+
+    env:
+      TARGET_OWNER: sory215
+      TARGET_REPO_NAME: pmupredict-frontend
+      TARGET_REPO: sory215/pmupredict-frontend
+
+    steps:
+      - name: Checkout source repo (full)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Prepare branch name
+        id: vars
+        run: |
+          SHORT_SHA=$(echo ${GITHUB_SHA} | cut -c1-7)
+          BRANCH_NAME="syn4-sync-include-git-${SHORT_SHA}"
+          echo "BRANCH_NAME=${BRANCH_NAME}" >> $GITHUB_OUTPUT
+
+      - name: Clone target repo (will be overwritten)
+        env:
+          TARGET_REPO: ${{ env.TARGET_REPO }}
+        run: |
+          # WARNING: this workflow will copy the .git directory from the source to the target.
+          # This is destructive and may overwrite the target repository history.
+          # You must explicitly run this workflow and pass confirm=YES to proceed.
+          git clone https://x-access-token:${{ secrets.PERSONAL_TOKEN }}@github.com/${{ env.TARGET_REPO }} target || exit 1
+
+      - name: Overwrite target with full repo (including .git)
+        env:
+          SRC: ${{ github.workspace }}
+        run: |
+          # This will copy everything including .git and completely replace target/.git
+          rsync -av --delete "${SRC}/" target/
+
+      - name: Push overwritten repo as branch (force)
+        env:
+          TARGET_REPO: ${{ env.TARGET_REPO }}
+          BRANCH: ${{ steps.vars.outputs.BRANCH_NAME }}
+        run: |
+          cd target
+          # Force push the current state to a new branch on the target repo
+          git push --force https://x-access-token:${{ secrets.PERSONAL_TOKEN }}@github.com/${{ env.TARGET_REPO }} HEAD:refs/heads/${BRANCH}
+
+      - name: Create Pull Request to syn4
+        env:
+          TARGET_REPO: ${{ env.TARGET_REPO }}
+          BRANCH: ${{ steps.vars.outputs.BRANCH_NAME }}
+        run: |
+          PR_TITLE="SYNC (INCLUDE .git) from pmupredict @${GITHUB_SHA}"
+          PR_BODY="Dangerous sync: this PR replaces target repo metadata with the source .git. Only merge if you understand the consequences."
+          PAYLOAD=$(jq -n --arg title "$PR_TITLE" --arg head "${{ env.TARGET_OWNER }}:${BRANCH}" --arg base "syn4" --arg body "$PR_BODY" '{title:$title,head:$head,base:$base,body:$body}')
+          RESPONSE=$(curl -s -X POST -H "Authorization: token ${{ secrets.PERSONAL_TOKEN }}" -H "Accept: application/vnd.github+json" https://api.github.com/repos/${{ env.TARGET_REPO }}/pulls -d "$PAYLOAD")
+          echo "$RESPONSE" | jq .
+
+  abort:
+    if: "github.event.inputs.confirm != 'YES'"
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "Aborting: confirm was not set to YES. This workflow is intentionally dangerous and requires explicit confirmation."
