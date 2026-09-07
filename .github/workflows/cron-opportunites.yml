@@ -1,0 +1,28 @@
+name: PMUPredict — opportunités
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: pmupredict-backend/requirements.txt
+      - run: pip install -r pmupredict-backend/requirements.txt
+      - name: Exécuter
+        run: cd pmupredict-backend && python -m lib.live_opportunities
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          PMU_PROGRAMME_BASE_URL: ${{ secrets.PMU_PROGRAMME_BASE_URL }}
+          RESULTS_API_URL: ${{ secrets.RESULTS_API_URL }}
+          MODEL_STORAGE_BUCKET: modeles
+          APP_TIMEZONE: Europe/Paris
