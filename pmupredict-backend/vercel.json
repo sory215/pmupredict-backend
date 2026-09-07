@@ -1,0 +1,37 @@
+{
+  "builds": [
+    { "src": "main.py", "use": "@vercel/python" },
+
+    { "src": "api/courses.py", "use": "@vercel/python" },
+    { "src": "api/tipsters.py", "use": "@vercel/python" },
+    { "src": "api/recommendations.py", "use": "@vercel/python" },
+    { "src": "api/analyse/[course_id].py", "use": "@vercel/python" },
+
+    { "src": "api/cron/ingest.py", "use": "@vercel/python" },
+    { "src": "api/cron/pronostics.py", "use": "@vercel/python" },
+    { "src": "api/cron/predict.py", "use": "@vercel/python" },
+    { "src": "api/cron/fusion.py", "use": "@vercel/python" },
+    { "src": "api/cron/train.py", "use": "@vercel/python" },
+    { "src": "api/cron/performance_tipsters.py", "use": "@vercel/python" },
+    { "src": "api/cron/opportunites.py", "use": "@vercel/python" }
+  ],
+  "routes": [
+    { "src": "/", "dest": "main.py" },
+    { "src": "/health", "dest": "main.py" },
+    { "src": "/api/predict", "dest": "main.py" },
+    { "src": "/api/chat", "dest": "main.py" },
+
+    { "src": "/api/courses", "dest": "api/courses.py" },
+    { "src": "/api/tipsters", "dest": "api/tipsters.py" },
+    { "src": "/api/recommendations", "dest": "api/recommendations.py" },
+    { "src": "/api/analyse/(?<course_id>[^/]+)", "dest": "api/analyse/[course_id].py" },
+
+    { "src": "/api/cron/ingest", "dest": "api/cron/ingest.py" },
+    { "src": "/api/cron/pronostics", "dest": "api/cron/pronostics.py" },
+    { "src": "/api/cron/predict", "dest": "api/cron/predict.py" },
+    { "src": "/api/cron/fusion", "dest": "api/cron/fusion.py" },
+    { "src": "/api/cron/train", "dest": "api/cron/train.py" },
+    { "src": "/api/cron/performance_tipsters", "dest": "api/cron/performance_tipsters.py" },
+    { "src": "/api/cron/opportunites", "dest": "api/cron/opportunites.py" }
+  ]
+}
