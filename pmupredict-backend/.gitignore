@@ -1,0 +1,76 @@
+# Environnements Python
+venv/
+venv_test/
+.venv/
+__pycache__/
+*.py[cod]
+
+# Variables d'environnement / secrets
+.env
+.env.*
+!.env.example
+
+# Vercel
+.vercel/
+# Archives de nettoyage
+_archive_*/
+
+# Zips de distribution
+*.zip
+
+# Modèles et données volumineuses
+models/
+data/
+lonab_batch_2026/
+lonaci_batch_2026/
+lonab_programmes/
+tmp/
+backups/
+logs/
+
+# PDF d'exemple locaux
+*.pdf
+# Node
+node_modules/
+
+# Builds / caches
+.next/
+out/
+dist/
+build/
+.cache/
+
+# LightGBM compilé localement
+lightgbm-src/
+tur/
+
+# Sauvegardes
+*.bak
+*.before_*
+*~
+BACKUP_*/
+
+# Fichiers de test HTML locaux
+canalturf_*.html
+geny_*.html
+
+# Tests / scripts locaux
+test_*.py
+*_test.py
+generate_jwt.py
+generate_pmupredict_jwt.js
+
+# Résultats de validation locaux
+*.csv
+
+# SQL / migrations locales
+schema_complet*.sql
+migration_historique_pmu.sql
+migrate_pmupredict.sh
+
+# Fichiers Python temporaires
+*.pyc
+.vercel
+.env*
+
+/lib/generated/prisma
