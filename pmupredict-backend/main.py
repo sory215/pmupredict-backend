@@ -316,7 +316,7 @@ async def ingest_pdf(file: UploadFile = File(...)):
     try:
         programme = parse_programme_pdf(file_bytes)
         result = _pdf_upsert_programme(programme)
-        _pdf_log_ingestion_run("success", result)
+        _pdf_log_ingestion_run("completed", result)
 
         return {
             "message": (
