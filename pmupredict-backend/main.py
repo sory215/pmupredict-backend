@@ -4,6 +4,10 @@ import sys
 from datetime import datetime
 import zoneinfo
 from fastapi import FastAPI, HTTPException
+from fastapi import File, UploadFile
+from datetime import datetime, timezone
+from lib.db import supabase as _pdf_supabase
+from lib.parse_programme import ProgrammeExtrait, ProgrammePdfError, parse_programme_pdf
 from fastapi.middleware.cors import CORSMiddleware
 
 # Ajout du sous-dossier lib au chemin Python pour importer tes scripts
@@ -208,3 +212,126 @@ def chat_endpoint(q: str, date_str: str = None):
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Erreur assistant : {str(e)}")
+
+
+# ===== Ingestion PDF de programme (upload manuel depuis le chat) =====
+_PDF_SOURCE_MANUAL_UPLOAD = "manual_pdf_upload"
+
+
+def _pdf_upsert_programme(programme: ProgrammeExtrait) -> dict:
+    hippo_res = (
+        _pdf_supabase.table("hippodromes")
+        .select("id")
+        .ilike("nom", programme.hippodrome_nom)
+        .limit(1)
+        .execute()
+    )
+    if not hippo_res.data:
+        raise HTTPException(
+            404,
+            f"Hippodrome '{programme.hippodrome_nom}' introuvable dans la table "
+            "hippodromes — vérifie l'orthographe ou crée-le d'abord.",
+        )
+    hippodrome_id = hippo_res.data[0]["id"]
+
+    reunion_res = (
+        _pdf_supabase.table("reunions")
+        .upsert(
+            {"date": programme.date, "numero": programme.reunion_numero, "hippodrome_id": hippodrome_id},
+            on_conflict="date,numero,hippodrome_id",
+        )
+        .execute()
+    )
+    reunion_id = reunion_res.data[0]["id"]
+
+    courses_written = 0
+    partants_written = 0
+
+    for course in programme.courses:
+        course_res = (
+            _pdf_supabase.table("courses")
+            .upsert(
+                {
+                    "reunion_id": reunion_id,
+                    "numero": course.numero,
+                    "libelle": course.libelle,
+                    "discipline": course.discipline,
+                    "distance_m": course.distance_m,
+                    "allocation": course.allocation_euros,
+                    "heure_depart": course.heure_depart,
+                    "statut": "programmee",
+                },
+                on_conflict="reunion_id,numero",
+            )
+            .execute()
+        )
+        course_id = course_res.data[0]["id"]
+        courses_written += 1
+
+        for partant in course.partants:
+            _pdf_supabase.table("partants").upsert(
+                {
+                    "course_id": course_id,
+                    "numero": partant.numero,
+                    "cheval_nom": partant.cheval_nom,
+                    "jockey": partant.driver_jockey,
+                    "driver": partant.driver_jockey,
+                    "entraineur": partant.entraineur,
+                    "proprietaire": partant.proprietaire,
+                    "age": partant.age,
+                    "cote_matin": partant.cote_matin,
+                    "poids_kg": partant.poids_kg,
+                },
+                on_conflict="course_id,numero",
+            ).execute()
+            partants_written += 1
+
+    return {"reunion_id": reunion_id, "courses_written": courses_written, "partants_written": partants_written}
+
+
+def _pdf_log_ingestion_run(status: str, result: dict, error: str | None = None):
+    _pdf_supabase.table("historique_ingestion_runs").insert(
+        {
+            "source": _PDF_SOURCE_MANUAL_UPLOAD,
+            "started_at": datetime.now(timezone.utc).isoformat(),
+            "finished_at": datetime.now(timezone.utc).isoformat(),
+            "status": status,
+            "documents_seen": 1,
+            "documents_ok": 1 if status == "success" else 0,
+            "documents_failed": 0 if status == "success" else 1,
+            "courses_written": result.get("courses_written", 0),
+            "partants_written": result.get("partants_written", 0),
+            "errors": {"message": error} if error else None,
+        }
+    ).execute()
+
+
+@app.post("/api/ingest-pdf")
+async def ingest_pdf(file: UploadFile = File(...)):
+    if file.content_type != "application/pdf":
+        raise HTTPException(400, "Seuls les fichiers PDF sont acceptés pour l'instant.")
+
+    file_bytes = await file.read()
+
+    try:
+        programme = parse_programme_pdf(file_bytes)
+        result = _pdf_upsert_programme(programme)
+        _pdf_log_ingestion_run("success", result)
+
+        return {
+            "message": (
+                f"Programme importé : {programme.hippodrome_nom} du {programme.date} — "
+                f"{result['courses_written']} course(s), {result['partants_written']} partant(s)."
+            ),
+            **result,
+        }
+
+    except ProgrammePdfError as e:
+        _pdf_log_ingestion_run("failed", {}, error=str(e))
+        raise HTTPException(422, f"Format de PDF non reconnu : {e}")
+    except HTTPException as e:
+        _pdf_log_ingestion_run("failed", {}, error=str(e.detail))
+        raise
+    except Exception as e:
+        _pdf_log_ingestion_run("failed", {}, error=str(e))
+        raise HTTPException(500, f"Erreur inattendue lors de l'import : {e}")
