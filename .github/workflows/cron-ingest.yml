@@ -10,8 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
           cache: pip
@@ -22,8 +22,8 @@ jobs:
           PMU_PROGRAMME_BASE_URL: ${{ secrets.PMU_PROGRAMME_BASE_URL }}
           RESULTS_API_URL: ${{ secrets.RESULTS_API_URL }}
         run: |
-          python -c "from urllib.parse import urlparse; import os; u=urlparse(os.environ['PMU_PROGRAMME_BASE_URL']); print('PMU scheme:',u.scheme); print('PMU hostname:',u.hostname); print('PMU port:',u.port); print('PMU path:',u.path)"
-          python -c "from urllib.parse import urlparse; import os; u=urlparse(os.environ['RESULTS_API_URL']); print('RESULT scheme:',u.scheme); print('RESULT hostname:',u.hostname); print('RESULT port:',u.port); print('RESULT path:',u.path)"
+          python -c "from urllib.parse import urlparse; import os; u=urlparse(os.environ['PMU_PROGRAMME_BASE_URL']); print('PMU scheme:',u.scheme); print('PMU hostname:',u.hostname); print('PMU port:',u.port)"
+          python -c "from urllib.parse import urlparse; import os; u=urlparse(os.environ['RESULTS_API_URL']); print('RESULT scheme:',u.scheme); print('RESULT hostname:',u.hostname); print('RESULT port:',u.port)"
 
       - name: Tester connexion Python PMU
         env:
@@ -36,7 +36,7 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
-          python -c "import os,requests; u=os.environ['SUPABASE_URL'].rstrip('/')+'/rest/v1/hippodromes?select=id&limit=1'; r=requests.get(u,headers={'apikey':os.environ['SUPABASE_SERVICE_ROLE_KEY'],'Authorization':'Bearer '+os.environ['SUPABASE_SERVICE_ROLE_KEY']},timeout=15); print('SUPABASE HTTP:',r.status_code); print('SUPABASE BYTES:',len(r.content)); print('SUPABASE BODY:',r.text[:200])"
+          python -c "import os,requests; u=os.environ['SUPABASE_URL'].rstrip('/')+'/rest/v1/hippodromes?select=id&limit=1'; r=requests.get(u,headers={'apikey':os.environ['SUPABASE_SERVICE_ROLE_KEY']}); print('HTTP:',r.status_code); print('LEN:',len(r.json()))"
 
       - name: Exécuter
         run: cd pmupredict-backend && python -m lib.ingest
