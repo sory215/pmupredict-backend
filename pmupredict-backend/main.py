@@ -301,7 +301,7 @@ def _pdf_log_ingestion_run(status: str, result: dict, error: str | None = None):
             "documents_failed": 0 if status == "success" else 1,
             "courses_written": result.get("courses_written", 0),
             "partants_written": result.get("partants_written", 0),
-            "errors": {"message": error} if error else None,
+            "errors": {"message": error} if error else {},
         }
     ).execute()
 
