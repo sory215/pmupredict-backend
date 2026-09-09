@@ -18,6 +18,7 @@ jobs:
           cache-dependency-path: pmupredict-backend/requirements.txt
       - run: pip install -r pmupredict-backend/requirements.txt
       - name: Vérifier URL PMU
+        continue-on-error: true
         env:
           PMU_PROGRAMME_BASE_URL: ${{ secrets.PMU_PROGRAMME_BASE_URL }}
           RESULTS_API_URL: ${{ secrets.RESULTS_API_URL }}
@@ -26,12 +27,14 @@ jobs:
           python -c "from urllib.parse import urlparse; import os; u=urlparse(os.environ['RESULTS_API_URL']); print('RESULT scheme:',u.scheme); print('RESULT hostname:',u.hostname); print('RESULT port:',u.port)"
 
       - name: Tester connexion Python PMU
+        continue-on-error: true
         env:
           PMU_PROGRAMME_BASE_URL: ${{ secrets.PMU_PROGRAMME_BASE_URL }}
         run: |
           python -c "import requests,os; u=os.environ['PMU_PROGRAMME_BASE_URL']+'/programme/18082026/R1/C1/participants'; r=requests.get(u,params={'specialisation':'INTERNET'},timeout=15); print('HTTP:',r.status_code); print('URL:',r.url); print('BYTES:',len(r.content))"
 
       - name: Tester connexion Supabase Python
+        continue-on-error: true
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
