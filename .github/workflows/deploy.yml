@@ -1,0 +1,17 @@
+name: Deploy
+on:
+  workflow_dispatch:
+    inputs:
+      env:
+        description: 'Environment'
+        required: true
+      version:
+        description: 'Version'
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: echo "Deploying to ${{ inputs.env }} version ${{ inputs.version }}"
