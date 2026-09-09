@@ -109,6 +109,10 @@
     {
       "src": "/api/cron/opportunites",
       "dest": "api/cron/opportunites.py"
+    },
+    {
+      "src": "/api/ingest-pdf",
+      "dest": "main.py"
     }
   ]
 }
