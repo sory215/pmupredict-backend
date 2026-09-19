@@ -1,0 +1,48 @@
+{
+  "fullmode": true,
+  "disciplines": {
+    "attelé": {
+      "favoris": 0.45,
+      "outsiders": 0.35,
+      "tocard": 0.20
+    },
+    "plat": {
+      "favoris": 0.40,
+      "outsiders": 0.40,
+      "tocard": 0.20
+    },
+    "haie": {
+      "favoris": 0.30,
+      "outsiders": 0.30,
+      "tocard": 0.40
+    }
+  },
+  "coeff_weights": {
+    "forme": 0.35,
+    "reussite": 0.35,
+    "appetence": 0.30
+  },
+  "equipment_impact": {
+    "oeilleres_australiennes": 1.05,
+    "oeilleres_classiques": 0.98,
+    "ferrure_plaque_ant": 1.00,
+    "ferrure_plaque_post": 1.02,
+    "ferrure_plaque_4": 1.05,
+    "ferrure_deferre_ant": 0.95,
+    "ferrure_deferre_post": 0.97,
+    "ferrure_deferre_4": 0.90,
+    "ferrure_mixte": 1.00
+  },
+  "draw_advantage": {
+    "inside": 0.05,
+    "outside": -0.03
+  },
+  "weight_penalty": 0.02,
+  "heatmap_ranges": [
+    0,
+    2,
+    4,
+    6,
+    8
+  ]
+}
