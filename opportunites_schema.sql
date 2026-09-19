@@ -1,0 +1,1 @@
+-- Opportunités incluses dans schema_complet.sql. Ce fichier est conservé pour compatibilité.

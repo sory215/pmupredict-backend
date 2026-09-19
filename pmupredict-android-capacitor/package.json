@@ -1,0 +1,19 @@
+{
+  "name": "pmupredict-android",
+  "version": "1.1.0",
+  "private": true,
+  "engines": { "node": ">=20.9.0" },
+  "scripts": {
+    "sync": "npx cap sync android",
+    "add:android": "npx cap add android",
+    "open": "npx cap open android",
+    "build": "npx cap sync android && cd android && ./gradlew assembleDebug"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.4.2",
+    "@capacitor/core": "8.4.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.4.2"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "functions": {
+    "api/cron/ingest.py": {
+      "maxDuration": 60
+    },
+    "api/cron/pronostics.py": {
+      "maxDuration": 120
+    },
+    "api/cron/predict.py": {
+      "maxDuration": 120
+    },
+    "api/cron/fusion.py": {
+      "maxDuration": 60
+    },
+    "api/cron/train.py": {
+      "maxDuration": 300
+    },
+    "api/cron/performance_tipsters.py": {
+      "maxDuration": 60
+    },
+    "api/cron/opportunites.py": {
+      "maxDuration": 60
+    },
+    "api/analyse/[course_id].py": {
+      "maxDuration": 10
+    },
+    "api/courses.py": {
+      "maxDuration": 10
+    },
+    "api/tipsters.py": {
+      "maxDuration": 10
+    },
+    "api/recommendations.py": {
+      "maxDuration": 10
+    }
+  }
+}

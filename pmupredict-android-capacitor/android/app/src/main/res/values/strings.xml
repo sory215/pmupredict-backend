@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">PMUPredict</string>
+    <string name="title_activity_main">PMUPredict</string>
+    <string name="package_name">com.pmupredict.app</string>
+    <string name="custom_url_scheme">com.pmupredict.app</string>
+</resources>

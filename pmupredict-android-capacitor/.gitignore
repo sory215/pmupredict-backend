@@ -1,0 +1,8 @@
+
+# Secrets & signature
+.env
+.env.*
+*.jks
+*.keystore
+keystore.properties
+local.properties

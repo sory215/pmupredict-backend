@@ -1,0 +1,51 @@
+# Ignore Gradle project-specific cache directory
+.gradle
+
+# Ignore ACS editor directory
+.acside
+
+# Ignore Kotlin directory
+.kotlin
+
+# Ignore Gradle build output directory
+build
+# Secrets & signature
+.env
+.env.*
+!.env.example
+*.jks
+*.keystore
+local.properties
+
+keystore.properties
+
+# Node
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+package-lock.json.bak
+
+# Capacitor / Android généré
+capacitor-cordova-android-plugins/
+android/.gradle/
+android/build/
+android/app/build/
+android/app/src/main/assets/public/
+android/local.properties
+
+# APK / AAB
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# Backups
+.env.backup
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

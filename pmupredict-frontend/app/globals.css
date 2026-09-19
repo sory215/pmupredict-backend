@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-fraunces: "Fraunces", serif;
+  --font-inter: "Inter", sans-serif;
+  --font-plex-mono: "IBM Plex Mono", monospace;
+}
+
+body {
+  background-color: #F6F1E4;
+  color: #201A12;
+  font-family: var(--font-inter);
+}
+
+/* Hairline "programme papier" divider, utilisé entre chaque ligne de racecard */
+.racecard-rule {
+  border-bottom: 1px solid #D9CFB8;
+}
+
+/* Texture papier très subtile, pour éviter un fond plat */
+.paper-texture {
+  background-image: radial-gradient(#00000006 0.5px, transparent 0.5px);
+  background-size: 6px 6px;
+}
