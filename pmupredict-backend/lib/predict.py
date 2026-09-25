@@ -21,7 +21,7 @@ def model_for(discipline):
 
 def fetch_donnees_du_jour(jour=None):
     jour=jour or today_local().isoformat()
-    courses=fetch_all("courses","id,discipline,allocation,heure_depart,statut,distance_m",page_size=1000)
+    courses=fetch_all("courses","id,reunion_id,discipline,allocation,heure_depart,statut,distance_m",page_size=1000)
     reunions=fetch_all("reunions","id,date",page_size=1000)
     rd={r["id"]:r["date"] for r in reunions}
     courses=[c for c in courses if rd.get(c.get("reunion_id"))==jour and c.get("statut") in ("a_venir","en_cours")]
