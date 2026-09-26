@@ -98,6 +98,36 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
+      - name: Diagnostic direct courses-partants
+        run: |
+          cd pmupredict-backend
+          PYTHONPATH=lib python - <<'PYDIAG'
+          from db import supabase
+
+          courses = supabase.table("courses").select(
+              "id,reunion_id,numero,libelle"
+          ).eq("reunion_id", "8f0d3567-7ace-429c-82c0-02470040ac95").execute().data or []
+
+          print("=== DIAGNOSTIC DIRECT COURSES-PARTANTS ===")
+
+          for c in courses:
+              rows = supabase.table("partants").select(
+                  "id,course_id,numero,cheval_nom"
+              ).eq("course_id", c["id"]).execute().data or []
+
+              print(
+                  "COURSE",
+                  c["numero"],
+                  c["id"],
+                  "PARTANTS",
+                  len(rows),
+                  rows[:3]
+              )
+          PYDIAG
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
       - name: Exécuter
         run: python pmupredict-backend/lib/predict.py
         env:
