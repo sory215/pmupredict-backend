@@ -17,6 +17,33 @@ jobs:
           cache: pip
           cache-dependency-path: pmupredict-backend/requirements.txt
       - run: pip install -r pmupredict-backend/requirements.txt
+      - name: Diagnostic date et courses
+        run: |
+          cd pmupredict-backend
+          PYTHONPATH=lib python - <<'PYDIAG'
+          import os
+          from datetime import datetime
+          from zoneinfo import ZoneInfo
+          from db import fetch_all
+
+          tz = ZoneInfo(os.getenv('APP_TIMEZONE', 'Europe/Paris'))
+          now = datetime.now(tz)
+          today = now.date().isoformat()
+          courses = fetch_all('courses', 'id,reunion_id,statut,heure_depart', page_size=1000)
+          reunions = fetch_all('reunions', 'id,date', page_size=1000)
+          rd = {r['id']: r['date'] for r in reunions}
+          filtered = [c for c in courses if rd.get(c.get('reunion_id')) == today and c.get('statut') in ('a_venir', 'en_cours')]
+
+          print('=== DIAGNOSTIC PREDICTION ===')
+          print('APP_TIMEZONE =', os.getenv('APP_TIMEZONE'))
+          print('now_local =', now.isoformat())
+          print('today_local =', today)
+          print('courses_total =', len(courses))
+          print('reunions_total =', len(reunions))
+          print('courses_filtrees =', len(filtered))
+          for c in filtered[:10]:
+              print('COURSE:', c)
+          PYDIAG
       - name: Exécuter
         run: python pmupredict-backend/lib/predict.py
         env:
