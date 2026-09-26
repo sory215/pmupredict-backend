@@ -44,10 +44,10 @@ jobs:
           for c in filtered[:10]:
               print('COURSE:', c)
           PYDIAG
-          env:
-            SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-            SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-            APP_TIMEZONE: Europe/Paris
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          APP_TIMEZONE: Europe/Paris
       - name: Exécuter
         run: python pmupredict-backend/lib/predict.py
         env:
