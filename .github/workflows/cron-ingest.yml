@@ -18,7 +18,7 @@ jobs:
           cache-dependency-path: pmupredict-backend/requirements.txt
       - run: pip install -r pmupredict-backend/requirements.txt
       - name: Exécuter
-        run: python pmupredict-backend/lib/ingest.py
+        run: python -m core.data.ingest
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
