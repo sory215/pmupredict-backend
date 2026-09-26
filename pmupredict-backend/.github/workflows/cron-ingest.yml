@@ -39,7 +39,7 @@ jobs:
           python -c "import os,requests; u=os.environ['SUPABASE_URL'].rstrip('/')+'/rest/v1/hippodromes?select=id&limit=1'; r=requests.get(u,headers={'apikey':os.environ['SUPABASE_SERVICE_ROLE_KEY'],'Authorization':'Bearer '+os.environ['SUPABASE_SERVICE_ROLE_KEY']},timeout=15); print('SUPABASE HTTP:',r.status_code); print('SUPABASE BYTES:',len(r.content)); print('SUPABASE BODY:',r.text[:200])"
 
       - name: Exécuter
-        run: cd pmupredict-backend && python -m lib.ingest
+        run: cd pmupredict-backend && python -m core.data.ingest
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
