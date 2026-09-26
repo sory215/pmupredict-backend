@@ -128,6 +128,49 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
+      - name: Diagnostic réponse PMU participants
+        run: |
+          cd pmupredict-backend
+          python - <<'PYDIAG'
+          import os
+          import requests
+
+          base = os.environ["PMU_PROGRAMME_BASE_URL"]
+          url = f"{base}/programme/26092026/R1/C3/participants"
+
+          r = requests.get(
+              url,
+              params={"specialisation": "INTERNET"},
+              headers={"User-Agent": "pmupredict/1.0 (+https://pmupredict.app)"},
+              timeout=20,
+          )
+
+          print("=== DIAGNOSTIC REPONSE PMU PARTICIPANTS ===")
+          print("HTTP =", r.status_code)
+          print("BYTES =", len(r.content))
+
+          try:
+              payload = r.json()
+              print("TYPE =", type(payload).__name__)
+
+              if isinstance(payload, dict):
+                  participants = payload.get("participants", [])
+                  print("PARTICIPANTS =", len(participants) if isinstance(participants, list) else "NON_LISTE")
+                  if isinstance(participants, list) and participants:
+                      print("PREMIER_KEYS =", sorted(participants[0].keys()))
+                      print("PREMIER =", participants[0])
+              elif isinstance(payload, list):
+                  print("PARTICIPANTS =", len(payload))
+                  if payload:
+                      print("PREMIER_KEYS =", sorted(payload[0].keys()) if isinstance(payload[0], dict) else type(payload[0]).__name__)
+                      print("PREMIER =", payload[0])
+          except Exception as e:
+              print("JSON_ERROR =", repr(e))
+              print("BODY =", r.text[:1000])
+          PYDIAG
+        env:
+          PMU_PROGRAMME_BASE_URL: ${{ secrets.PMU_PROGRAMME_BASE_URL }}
+
       - name: Exécuter
         run: python pmupredict-backend/lib/predict.py
         env:
