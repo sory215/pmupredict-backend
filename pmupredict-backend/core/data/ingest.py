@@ -344,6 +344,9 @@ def fetch_reunion(jour:str,rn:int)->list[CourseNormalisee]:
         )
 
         partants = _fetch_participants(jour, rn, num)
+        print(f"DIAGNOSTIC INGEST PARTICIPANTS: R{rn}/C{num} = {len(partants)}")
+        if partants:
+            print("DIAGNOSTIC PREMIERS PARTICIPANTS:", partants[:3])
 
         # Sécurité : certains flux pourraient éventuellement contenir
         # directement les participants dans la course.
