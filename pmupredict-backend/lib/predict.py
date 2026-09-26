@@ -6,6 +6,7 @@ from supabase import create_client,Client
 from db import fetch_all
 from timeutils import today_local
 from features import enrichir_historique,build_features
+from model_names import model_name
 log=logging.getLogger("predict"); logging.basicConfig(level=logging.INFO)
 URL=os.environ["SUPABASE_URL"]; KEY=os.environ["SUPABASE_SERVICE_ROLE_KEY"]; supabase:Client=create_client(URL,KEY)
 BASE="lgbm_ranker"; BUCKET=os.getenv("MODEL_STORAGE_BUCKET","modeles")
@@ -16,7 +17,7 @@ def active(nom):
     row=r[0]; raw=supabase.storage.from_(BUCKET).download(row["chemin_storage"]); return pickle.loads(raw),row
 
 def model_for(discipline):
-    a,r=active(f"{BASE}_{discipline}")
+    a,r=active(model_name(discipline, BASE))
     return (a,r) if a else active(f"{BASE}_global")
 
 def fetch_donnees_du_jour(jour=None):

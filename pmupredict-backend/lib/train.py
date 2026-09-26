@@ -9,6 +9,7 @@ from sklearn.model_selection import GroupKFold
 from supabase import create_client,Client
 from db import fetch_all
 from features import enrichir_historique,build_features,rang_vers_pertinence
+from model_names import model_name
 
 log=logging.getLogger("train"); logging.basicConfig(level=logging.INFO)
 SUPABASE_URL=os.environ["SUPABASE_URL"]; KEY=os.environ["SUPABASE_SERVICE_ROLE_KEY"]; supabase:Client=create_client(SUPABASE_URL,KEY)
@@ -76,7 +77,7 @@ def run_training():
     df=fetch_training_data()
     if df.empty:return {"statut":"annule","raison":"aucune donnée historique avec arrivées"}
     results=[train_one(f"{BASE}_global",df,MIN_GLOBAL)]
-    for disc in sorted(df["discipline"].fillna("inconnu").unique()):results.append(train_one(f"{BASE}_{disc}",df[df.discipline==disc],MIN_DISC))
+    for disc in sorted(df["discipline"].fillna("inconnu").unique()):results.append(train_one(model_name(disc, BASE),df[df.discipline==disc],MIN_DISC))
     return {"statut":"termine","resultats":results,"nb_echantillons_total":len(df)}
 
 if __name__=="__main__":print(run_training())
