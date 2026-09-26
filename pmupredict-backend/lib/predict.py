@@ -27,6 +27,8 @@ def fetch_donnees_du_jour(jour=None):
     courses=[c for c in courses if rd.get(c.get("reunion_id"))==jour and c.get("statut") in ("a_venir","en_cours")]
     if not courses:return pd.DataFrame()
     ids=[c["id"] for c in courses]; ps=fetch_all("partants","id,course_id,cheval_nom,cote_matin,cote_actuelle,poids_kg,musique,jockey,est_deferre",course_id__in=ids)
+    print(f"DIAGNOSTIC PARTANTS: courses={len(ids)} partants={len(ps)}")
+    if ps: print("DIAGNOSTIC PREMIERS PARTANTS:", ps[:5])
     if not ps:return pd.DataFrame()
     names=list({p["cheval_nom"] for p in ps}); hist_ps=fetch_all("partants","id,course_id,cheval_nom,cote_matin,cote_actuelle,poids_kg,musique,jockey,est_deferre",cheval_nom__in=names)
     all_courses=fetch_all("courses","id,discipline,allocation,heure_depart,statut,distance_m",page_size=1000)
