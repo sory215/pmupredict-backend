@@ -67,17 +67,47 @@ def publish(nom,model,jenc,denc,metrics,n):
     supabase.table("modeles").update({"actif":False}).eq("nom",nom).eq("actif",True).execute()
     return supabase.table("modeles").insert({"nom":nom,"version":version,"chemin_storage":path,"metriques":metrics,"nb_echantillons":n,"actif":True}).execute().data[0]
 
+def _active_feature_count(row):
+    if not row:
+        return None
+    try:
+        raw=supabase.storage.from_(BUCKET).download(row["chemin_storage"])
+        artifact=pickle.loads(raw)
+        model=artifact.get("model")
+        return getattr(model,"n_features_in_",None)
+    except Exception as e:
+        log.warning("Impossible de lire la signature du modèle actif %s: %s",row.get("nom"),e)
+        return None
+
 def train_one(nom,subset,threshold):
     if len(subset)<threshold:return {"nom_modele":nom,"statut":"annule","raison":f"{len(subset)} < {threshold}"}
-    model,metrics,j,d=train_and_evaluate(subset); old=active(nom); oldscore=((old or {}).get("metriques") or {}).get("top5_hit_rate",-1)
-    if old and metrics["top5_hit_rate"]<=oldscore:return {"nom_modele":nom,"statut":"conserve_ancien","metriques":metrics,"metriques_actif":old.get("metriques")}
-    row=publish(nom,model,j,d,metrics,len(subset)); return {"nom_modele":nom,"statut":"publie","version":row["version"],"metriques":metrics}
+    model,metrics,j,d=train_and_evaluate(subset)
+    old=active(nom)
+    oldscore=((old or {}).get("metriques") or {}).get("top5_hit_rate",-1)
+    old_features=_active_feature_count(old)
+    new_features=len(_FEATURES)
+
+    if old and old_features == new_features and metrics["top5_hit_rate"]<=oldscore:
+        return {"nom_modele":nom,"statut":"conserve_ancien","metriques":metrics,"metriques_actif":old.get("metriques"),"features":new_features}
+
+    row=publish(nom,model,j,d,metrics,len(subset))
+    return {"nom_modele":nom,"statut":"publie","version":row["version"],"metriques":metrics,"features":new_features,"ancien_features":old_features}
 
 def run_training():
     df=fetch_training_data()
     if df.empty:return {"statut":"annule","raison":"aucune donnée historique avec arrivées"}
+
     results=[train_one(f"{BASE}_global",df,MIN_GLOBAL)]
-    for disc in sorted(df["discipline"].fillna("inconnu").unique()):results.append(train_one(model_name(disc, BASE),df[df.discipline==disc],MIN_DISC))
+
+    groups={}
+    for disc in df["discipline"].fillna("inconnu").unique():
+        key=model_name(disc,BASE)
+        groups.setdefault(key,[]).append(disc)
+
+    for nom,disciplines in sorted(groups.items()):
+        subset=df[df["discipline"].fillna("inconnu").isin(disciplines)]
+        results.append(train_one(nom,subset,MIN_DISC))
+
     return {"statut":"termine","resultats":results,"nb_echantillons_total":len(df)}
 
 if __name__=="__main__":print(run_training())
