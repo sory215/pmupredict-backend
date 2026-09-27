@@ -12,6 +12,8 @@ class PronosticExterne:
     date: str
     reunion: int
     course: int
+    hippodrome_code: str = ""
+    hippodrome_nom: str = ""
 
     classement: list[int] = field(default_factory=list)
 

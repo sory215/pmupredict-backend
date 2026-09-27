@@ -33,5 +33,11 @@
     "api/recommendations.py": {
       "maxDuration": 10
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/pronostics",
+      "schedule": "0 6 * * *"
+    }
+  ]
 }

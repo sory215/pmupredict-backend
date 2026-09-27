@@ -16,7 +16,9 @@ UA={"User-Agent":os.getenv("HTTP_USER_AGENT","pmupredict/1.0")}
 class P:hippodrome_code:str;reunion_numero:int;course_numero:int;nom:str;type:str;site:str;classement:list[int];commentaire:str=""
 
 def sources():
-    raw=os.getenv("PRONOSTICS_SOURCES_JSON","[]")
+    raw=os.getenv("PRONOSTICS_SOURCES_JSON","").strip()
+    if not raw:
+        return []
     try:return json.loads(raw)
     except json.JSONDecodeError:raise RuntimeError("PRONOSTICS_SOURCES_JSON doit être un JSON valide")
 
@@ -27,11 +29,54 @@ def collect_source(src,jour):
     return out
 
 def course_id(p):
-    h=supabase.table("hippodromes").select("id").eq("code",p.hippodrome_code).limit(1).execute().data
-    if not h:return None
-    r=supabase.table("reunions").select("id").eq("hippodrome_id",h[0]["id"]).eq("numero",p.reunion_numero).eq("date",today_local().isoformat()).limit(1).execute().data
-    if not r:return None
-    c=supabase.table("courses").select("id").eq("reunion_id",r[0]["id"]).eq("numero",p.course_numero).limit(1).execute().data
+    jour = today_local().isoformat()
+
+    if p.hippodrome_code:
+        h = (
+            supabase.table("hippodromes")
+            .select("id")
+            .eq("code", p.hippodrome_code)
+            .limit(1)
+            .execute()
+            .data
+        )
+        if not h:
+            return None
+
+        r = (
+            supabase.table("reunions")
+            .select("id")
+            .eq("hippodrome_id", h[0]["id"])
+            .eq("numero", p.reunion_numero)
+            .eq("date", jour)
+            .limit(1)
+            .execute()
+            .data
+        )
+    else:
+        r = (
+            supabase.table("reunions")
+            .select("id")
+            .eq("numero", p.reunion_numero)
+            .eq("date", jour)
+            .limit(1)
+            .execute()
+            .data
+        )
+
+    if not r:
+        return None
+
+    c = (
+        supabase.table("courses")
+        .select("id")
+        .eq("reunion_id", r[0]["id"])
+        .eq("numero", p.course_numero)
+        .limit(1)
+        .execute()
+        .data
+    )
+
     return c[0]["id"] if c else None
 
 def save(p):
@@ -44,11 +89,48 @@ def save(p):
     return True
 
 def run_pronostics_collection():
-    jour=today_local().isoformat();items=[];errors=[]
+    jour=today_local().isoformat()
+    items=[]
+    errors=[]
+
+    # Ancien système JSON : conservé.
     for src in sources():
-        if not src.get("url"):continue
-        try:items.extend(collect_source(src,jour))
-        except Exception as e:errors.append(f"{src.get('nom','source')}: {e}")
+        if not src.get("url"):
+            continue
+        try:
+            items.extend(collect_source(src,jour))
+        except Exception as e:
+            errors.append(f"{src.get('nom','source')}: {e}")
+
+    # Nouveau système de collecteurs spécialisés.
+    try:
+        from pronostics_sources.collector import collect_external_pronostics
+
+        externes = collect_external_pronostics(jour)
+
+        for x in externes:
+            items.append(
+                P(
+                    hippodrome_code="",
+                    reunion_numero=x.reunion,
+                    course_numero=x.course,
+                    nom=x.pronostiqueur,
+                    type=x.type_source,
+                    site=x.url,
+                    classement=x.classement,
+                    commentaire=x.commentaire,
+                )
+            )
+
+    except Exception as e:
+        errors.append(f"collecteurs spécialisés: {e}")
+
     saved=sum(save(x) for x in items)
-    return {"date":jour,"pronostics_recuperes":len(items),"pronostics_enregistres":saved,"erreurs":errors[:20]}
+
+    return {
+        "date":jour,
+        "pronostics_recuperes":len(items),
+        "pronostics_enregistres":saved,
+        "erreurs":errors[:20],
+    }
 if __name__=="__main__":print(run_pronostics_collection())

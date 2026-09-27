@@ -16,7 +16,9 @@ UA={"User-Agent":os.getenv("HTTP_USER_AGENT","pmupredict/1.0")}
 class P:hippodrome_code:str;reunion_numero:int;course_numero:int;nom:str;type:str;site:str;classement:list[int];commentaire:str=""
 
 def sources():
-    raw=os.getenv("PRONOSTICS_SOURCES_JSON","[]")
+    raw=os.getenv("PRONOSTICS_SOURCES_JSON","").strip()
+    if not raw:
+        return []
     try:return json.loads(raw)
     except json.JSONDecodeError:raise RuntimeError("PRONOSTICS_SOURCES_JSON doit être un JSON valide")
 
