@@ -27,3 +27,4 @@ jobs:
           MODEL_STORAGE_BUCKET: modeles
           APP_TIMEZONE: Europe/Paris
           PRONOSTICS_SOURCES_JSON: ${{ secrets.PRONOSTICS_SOURCES_JSON }}
+          PRONOSTICS_HTML_SOURCES_JSON: '[{"name":"turf_pronostics"}]'
