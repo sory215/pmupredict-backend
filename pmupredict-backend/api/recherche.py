@@ -6,6 +6,7 @@ from http.server import BaseHTTPRequestHandler
 from urllib.parse import parse_qs, urlparse
 
 from supabase import create_client
+from lib.pdf_extraction import extract_pdf_pages
 
 
 supabase = create_client(
@@ -41,12 +42,38 @@ class handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         params = parse_qs(urlparse(self.path).query)
+
+        pdf_path = params.get("pdf_path", [""])[0].strip()
+        if pdf_path:
+            try:
+                pages = extract_pdf_pages(pdf_path)
+                return self._send_json(
+                    200,
+                    {
+                        "pdf": {
+                            "path": pdf_path,
+                            "pages": pages,
+                            "page_count": len(pages),
+                        }
+                    },
+                )
+            except FileNotFoundError as exc:
+                return self._send_json(
+                    404,
+                    {"error": str(exc)},
+                )
+            except Exception as exc:
+                return self._send_json(
+                    500,
+                    {"error": str(exc)},
+                )
+
         course_id = params.get("course_id", [""])[0].strip()
 
         if not course_id:
             return self._send_json(
                 400,
-                {"error": "course_id obligatoire"},
+                {"error": "course_id ou pdf_path obligatoire"},
             )
 
         try:

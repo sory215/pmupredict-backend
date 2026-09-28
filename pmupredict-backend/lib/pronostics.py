@@ -28,8 +28,8 @@ def collect_source(src,jour):
         out.append(P(str(c.get("hippodrome_code","")),int(c.get("reunion",0)),int(c.get("course",0)),src["nom"],src.get("type","presse"),src["url"],list(map(int,c.get("pronostic",c.get("classement",[])))),c.get("commentaire","") or ""))
     return out
 
-def course_id(p):
-    jour = today_local().isoformat()
+def course_id(p, jour=None):
+    jour = jour or today_local().isoformat()
 
     if p.hippodrome_code:
         h = (
