@@ -57,7 +57,7 @@ def health_check():
 @app.get("/api/predict")
 def run_prediction():
     try:
-        from core.predict import run_prediction as predict_run
+        from predict import run_prediction as predict_run
 
         result = predict_run()
 
@@ -335,3 +335,112 @@ async def ingest_pdf(file: UploadFile = File(...)):
     except Exception as e:
         _pdf_log_ingestion_run("failed", {}, error=str(e))
         raise HTTPException(500, f"Erreur inattendue lors de l'import : {e}")
+
+@app.get("/api/predictions/today")
+def predictions_today():
+    try:
+        jour = parse_date_jour()
+        reunions = supabase.table("reunions").select("id,numero,date,hippodromes(nom,code)").eq("date", jour).execute().data or []
+        if not reunions:
+            return {"status": "success", "date": jour, "courses": []}
+        reunion_ids = [r["id"] for r in reunions]
+        reunion_by_id = {r["id"]: r for r in reunions}
+        courses = supabase.table("courses").select(
+            "id,reunion_id,numero,libelle,discipline,heure_depart,statut,distance_m,allocation"
+        ).in_("reunion_id", reunion_ids).execute().data or []
+        if not courses:
+            return {"status": "success", "date": jour, "courses": []}
+        course_ids = [c["id"] for c in courses]
+        predictions = supabase.table("predictions").select(
+            "course_id,partant_id,score,confiance,modele"
+        ).in_("course_id", course_ids).execute().data or []
+        partant_ids = list({p["partant_id"] for p in predictions})
+        partants_data = supabase.table("partants").select(
+            "id,numero,cheval_nom,jockey,cote_actuelle,cote_matin,musique,est_deferre"
+        ).in_("id", partant_ids).execute().data or []
+        partant_by_id = {p["id"]: p for p in partants_data}
+        preds_by_course = {}
+        for p in predictions:
+            preds_by_course.setdefault(p["course_id"], []).append(p)
+        result = []
+        for c in courses:
+            reunion = reunion_by_id.get(c["reunion_id"], {})
+            hippo = (reunion.get("hippodromes") or {}).get("nom", "")
+            cpreds = sorted(preds_by_course.get(c["id"], []), key=lambda x: -x["confiance"])
+            top_partants = []
+            for pred in cpreds:
+                partant = partant_by_id.get(pred["partant_id"], {})
+                if partant:
+                    top_partants.append({
+                        "numero": partant.get("numero"),
+                        "cheval_nom": partant.get("cheval_nom"),
+                        "jockey": partant.get("jockey"),
+                        "cote_actuelle": partant.get("cote_actuelle"),
+                        "cote_matin": partant.get("cote_matin"),
+                        "est_deferre": partant.get("est_deferre"),
+                        "score": pred["score"],
+                        "confiance": pred["confiance"],
+                    })
+            result.append({
+                "id": c["id"],
+                "reunion_numero": reunion.get("numero"),
+                "course_numero": c.get("numero"),
+                "hippodrome": hippo,
+                "libelle": c.get("libelle"),
+                "discipline": c.get("discipline"),
+                "heure_depart": c.get("heure_depart"),
+                "statut": c.get("statut"),
+                "distance_m": c.get("distance_m"),
+                "allocation": c.get("allocation"),
+                "predictions": top_partants,
+            })
+        result.sort(key=lambda x: (x["heure_depart"] or ""))
+        return {"status": "success", "date": jour, "nb_courses": len(result), "courses": result}
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Erreur : {str(e)}")
+
+
+@app.get("/api/courses/{course_id}/predictions")
+def predictions_course(course_id: str):
+    try:
+        course_resp = supabase.table("courses").select(
+            "id,reunion_id,numero,libelle,discipline,heure_depart,statut,distance_m"
+        ).eq("id", course_id).limit(1).execute().data
+        if not course_resp:
+            raise HTTPException(status_code=404, detail="Course introuvable")
+        course = course_resp[0]
+        predictions = supabase.table("predictions").select(
+            "partant_id,score,confiance,modele"
+        ).eq("course_id", course_id).execute().data or []
+        partant_ids = [p["partant_id"] for p in predictions]
+        partants_data = supabase.table("partants").select(
+            "id,numero,cheval_nom,jockey,cote_actuelle,cote_matin,musique,est_deferre,poids_kg"
+        ).in_("id", partant_ids).execute().data or []
+        partant_by_id = {p["id"]: p for p in partants_data}
+        predictions.sort(key=lambda x: -x["confiance"])
+        result = []
+        for pred in predictions:
+            partant = partant_by_id.get(pred["partant_id"], {})
+            result.append({
+                "partant_id": pred["partant_id"],
+                "numero": partant.get("numero"),
+                "cheval_nom": partant.get("cheval_nom"),
+                "jockey": partant.get("jockey"),
+                "cote_actuelle": partant.get("cote_actuelle"),
+                "cote_matin": partant.get("cote_matin"),
+                "musique": partant.get("musique"),
+                "poids_kg": partant.get("poids_kg"),
+                "est_deferre": partant.get("est_deferre"),
+                "score": pred["score"],
+                "confiance": pred["confiance"],
+            })
+        return {"status": "success", "course": course, "predictions": result}
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Erreur : {str(e)}")
+

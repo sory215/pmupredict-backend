@@ -7,9 +7,16 @@ from db import fetch_all
 from timeutils import today_local
 from features import enrichir_historique,build_features
 from model_names import model_name
+
+try:
+    import lightgbm  # noqa
+    BACKEND = "lightgbm"
+except ImportError:
+    BACKEND = "sklearn"
+
 log=logging.getLogger("predict"); logging.basicConfig(level=logging.INFO)
 URL=os.environ["SUPABASE_URL"]; KEY=os.environ["SUPABASE_SERVICE_ROLE_KEY"]; supabase:Client=create_client(URL,KEY)
-BASE="lgbm_ranker"; BUCKET=os.getenv("MODEL_STORAGE_BUCKET","modeles")
+BASE="lgbm_ranker" if BACKEND=="lightgbm" else "hgb_ranker"; BUCKET=os.getenv("MODEL_STORAGE_BUCKET","modeles")
 
 def active(nom):
     r=supabase.table("modeles").select("*").eq("nom",nom).eq("actif",True).limit(1).execute().data

@@ -4,7 +4,13 @@ import os,io,pickle,logging
 from datetime import datetime,timezone
 import pandas as pd
 import numpy as np
-from lightgbm import LGBMRanker
+try:
+    from lightgbm import LGBMRanker as _Ranker
+    BACKEND = "lightgbm"
+except ImportError:
+    from sklearn.ensemble import HistGradientBoostingRegressor as _Ranker
+    BACKEND = "sklearn"
+
 from sklearn.model_selection import GroupKFold
 from supabase import create_client,Client
 from db import fetch_all
@@ -13,7 +19,7 @@ from model_names import model_name
 
 log=logging.getLogger("train"); logging.basicConfig(level=logging.INFO)
 SUPABASE_URL=os.environ["SUPABASE_URL"]; KEY=os.environ["SUPABASE_SERVICE_ROLE_KEY"]; supabase:Client=create_client(SUPABASE_URL,KEY)
-BASE="lgbm_ranker"; BUCKET=os.getenv("MODEL_STORAGE_BUCKET","modeles"); MIN_GLOBAL=int(os.getenv("MIN_ECHANTILLONS_GLOBAL","100")); MIN_DISC=int(os.getenv("MIN_ECHANTILLONS_DISCIPLINE","60")); FOLDS=5
+BASE="lgbm_ranker" if BACKEND=="lightgbm" else "hgb_ranker"; BUCKET=os.getenv("MODEL_STORAGE_BUCKET","modeles"); MIN_GLOBAL=int(os.getenv("MIN_ECHANTILLONS_GLOBAL","100")); MIN_DISC=int(os.getenv("MIN_ECHANTILLONS_DISCIPLINE","60")); FOLDS=5
 
 def fetch_training_data():
     ps=fetch_all("partants","id,course_id,numero,cheval_nom,cote_matin,cote_actuelle,poids_kg,musique,jockey,est_deferre")
@@ -26,10 +32,16 @@ def fetch_training_data():
     return df
 
 def _groups(d):return d.groupby("course_id",sort=False).size().tolist()
+
 def _fit(d):
     d=d.sort_values(["heure_depart","course_id"]); X=d[_FEATURES]; y=d["pertinence"]
-    m=LGBMRanker(objective="lambdarank",n_estimators=250,max_depth=5,learning_rate=.04,num_leaves=31,min_child_samples=10,random_state=42,verbosity=-1)
-    m.fit(X,y,group=_groups(d)); return m
+    if BACKEND == "lightgbm":
+        m=_Ranker(objective="lambdarank",n_estimators=250,max_depth=5,learning_rate=.04,num_leaves=31,min_child_samples=10,random_state=42,verbosity=-1)
+        m.fit(X,y,group=_groups(d))
+    else:
+        m=_Ranker(max_iter=250,max_depth=5,learning_rate=.04,min_samples_leaf=10,random_state=42)
+        m.fit(X,y)
+    return m
 
 def _hit(model,d):
     if d.empty:return 0.0

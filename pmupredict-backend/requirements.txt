@@ -5,3 +5,4 @@ numpy==1.26.4
 scikit-learn==1.5.2
 lightgbm==4.5.0
 beautifulsoup4==4.12.3
+tzdata==2026.4
