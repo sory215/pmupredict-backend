@@ -9,6 +9,7 @@
 
 # Ignore Gradle build output directory
 build
+
 # Secrets & signature
 .env
 .env.*
@@ -16,7 +17,6 @@ build
 *.jks
 *.keystore
 local.properties
-
 keystore.properties
 
 # Node
@@ -24,7 +24,10 @@ node_modules/
 .next/
 out/
 *.tsbuildinfo
-package-lock.json.bak
+package-lock.json
+pnpm-lock.yaml
+package.json
+tailwind.config.js
 
 # Capacitor / Android généré
 capacitor-cordova-android-plugins/
@@ -40,8 +43,26 @@ android/local.properties
 *.ap_
 *.dex
 
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+.venv-pdf/
+venv/
+
 # Backups
 .env.backup
+*.bak
+*.backup
+*.before-*
+*.lgbm-backup
+
+# Fichiers temporaires
+*.log
+master
+R1C3
+pdf_extraction_*.txt
 
 # OS / IDE
 .DS_Store
@@ -51,10 +72,3 @@ Thumbs.db
 *.swp
 .vercel
 .env*
-
-# Vercel bundle size
-pmupredict-backend/node_modules/
-.venv-pdf/
-pmupredict-backend/.venv-pdf/
-node_modules/
-*.log
