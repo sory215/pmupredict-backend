@@ -49,3 +49,12 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
+.vercel
+.env*
+
+# Vercel bundle size
+pmupredict-backend/node_modules/
+.venv-pdf/
+pmupredict-backend/.venv-pdf/
+node_modules/
+*.log
