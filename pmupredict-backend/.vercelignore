@@ -1,0 +1,9 @@
+node_modules/
+scripts/
+__pycache__/
+*.bak
+*.pyc
+.venv/
+.venv-pdf/
+*.log
+test_*
