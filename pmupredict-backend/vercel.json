@@ -1,43 +1,19 @@
 {
   "functions": {
-    "api/cron/ingest.py": {
-      "maxDuration": 60
-    },
-    "api/cron/pronostics.py": {
-      "maxDuration": 120
-    },
-    "api/cron/predict.py": {
-      "maxDuration": 120
-    },
-    "api/cron/fusion.py": {
-      "maxDuration": 60
-    },
-    "api/cron/train.py": {
-      "maxDuration": 300
-    },
-    "api/cron/performance_tipsters.py": {
-      "maxDuration": 60
-    },
-    "api/cron/opportunites.py": {
-      "maxDuration": 60
-    },
-    "api/analyse/[course_id].py": {
-      "maxDuration": 10
-    },
-    "api/courses.py": {
-      "maxDuration": 10
-    },
-    "api/tipsters.py": {
-      "maxDuration": 10
-    },
-    "api/recommendations.py": {
-      "maxDuration": 10
-    }
+    "api/cron/train.py": { "maxDuration": 60 },
+    "api/*.py": { "maxDuration": 10 },
+    "api/analyse/*.py": { "maxDuration": 10 },
+    "api/cron/*.py": { "maxDuration": 60 }
   },
+  "rewrites": [
+    { "source": "/health", "destination": "/api/index" },
+    { "source": "/api/predict", "destination": "/api/index" },
+    { "source": "/api/chat", "destination": "/api/index" },
+    { "source": "/api/ingest-pdf", "destination": "/api/index" },
+    { "source": "/api/predictions/today", "destination": "/api/index" },
+    { "source": "/api/courses/:id/predictions", "destination": "/api/index" }
+  ],
   "crons": [
-    {
-      "path": "/api/cron/pronostics",
-      "schedule": "0 6 * * *"
-    }
+    { "path": "/api/cron/pronostics", "schedule": "0 6 * * *" }
   ]
 }
