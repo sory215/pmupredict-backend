@@ -11,7 +11,9 @@
     { "source": "/api/chat", "destination": "/api/index" },
     { "source": "/api/ingest-pdf", "destination": "/api/index" },
     { "source": "/api/predictions/today", "destination": "/api/index" },
-    { "source": "/api/courses/:id/predictions", "destination": "/api/index" }
+    { "source": "/api/courses/:id/predictions", "destination": "/api/index" },
+    { "source": "/docs", "destination": "/api/index" },
+    { "source": "/redoc", "destination": "/api/index" }
   ],
   "crons": [
     { "path": "/api/cron/pronostics", "schedule": "0 6 * * *" }
