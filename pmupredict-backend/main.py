@@ -6,6 +6,8 @@ import zoneinfo
 from fastapi import FastAPI, HTTPException
 from fastapi import File, UploadFile
 from datetime import datetime, timezone
+from fastapi.responses import HTMLResponse
+from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
 from lib.db import supabase as _pdf_supabase
 from lib.parse_programme import ProgrammeExtrait, ProgrammePdfError, parse_programme_pdf
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,7 +20,9 @@ from lib.db import supabase
 app = FastAPI(
     title="PMUPredict API",
     description="Backend API pour les prédictions PMU",
-    version="1.0.0"
+    version="1.0.0",
+    docs_url=None,  # Disable default docs to use custom ones with analytics
+    redoc_url=None  # Disable default redoc to use custom one with analytics
 )
 
 app.add_middleware(
@@ -28,6 +32,37 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# Custom documentation endpoints with Vercel Web Analytics
+@app.get("/docs", include_in_schema=False)
+async def custom_swagger_ui_html():
+    """Custom Swagger UI with Vercel Web Analytics"""
+    html = get_swagger_ui_html(
+        openapi_url=app.openapi_url,
+        title=app.title + " - Swagger UI",
+    )
+    # Inject Vercel Analytics script
+    analytics_script = '<script defer src="https://cdn.vercel-insights.com/v1/script.js"></script>'
+    html_content = html.body.decode('utf-8')
+    # Insert analytics script before closing body tag
+    html_content = html_content.replace('</body>', f'{analytics_script}</body>')
+    return HTMLResponse(content=html_content)
+
+
+@app.get("/redoc", include_in_schema=False)
+async def custom_redoc_html():
+    """Custom ReDoc with Vercel Web Analytics"""
+    html = get_redoc_html(
+        openapi_url=app.openapi_url,
+        title=app.title + " - ReDoc",
+    )
+    # Inject Vercel Analytics script
+    analytics_script = '<script defer src="https://cdn.vercel-insights.com/v1/script.js"></script>'
+    html_content = html.body.decode('utf-8')
+    # Insert analytics script before closing body tag
+    html_content = html_content.replace('</body>', f'{analytics_script}</body>')
+    return HTMLResponse(content=html_content)
 
 
 @app.get("/")
