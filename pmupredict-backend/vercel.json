@@ -1,21 +1,22 @@
 {
   "functions": {
-    "api/cron/train.py": { "maxDuration": 60 },
-    "api/*.py": { "maxDuration": 10 },
-    "api/analyse/*.py": { "maxDuration": 10 },
-    "api/cron/*.py": { "maxDuration": 60 }
+    "api/cron/train.py": {
+      "maxDuration": 60
+    },
+    "api/*.py": {
+      "maxDuration": 10
+    },
+    "api/analyse/*.py": {
+      "maxDuration": 10
+    },
+    "api/cron/*.py": {
+      "maxDuration": 60
+    }
   },
-  "rewrites": [
-    { "source": "/health", "destination": "/api/index" },
-    { "source": "/api/predict", "destination": "/api/index" },
-    { "source": "/api/chat", "destination": "/api/index" },
-    { "source": "/api/ingest-pdf", "destination": "/api/index" },
-    { "source": "/api/predictions/today", "destination": "/api/index" },
-    { "source": "/api/courses/:id/predictions", "destination": "/api/index" },
-    { "source": "/docs", "destination": "/api/index" },
-    { "source": "/redoc", "destination": "/api/index" }
-  ],
   "crons": [
-    { "path": "/api/cron/pronostics", "schedule": "0 6 * * *" }
+    {
+      "path": "/api/cron/pronostics",
+      "schedule": "0 6 * * *"
+    }
   ]
 }
