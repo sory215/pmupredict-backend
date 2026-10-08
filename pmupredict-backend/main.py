@@ -341,14 +341,6 @@ def _pdf_log_ingestion_run(status: str, result: dict, error: str | None = None):
     ).execute()
 
 
-@app.get("/api/debug-pdf-route")
-async def debug_pdf_route():
-    return {
-        "ok": True,
-        "route": "/api/debug-pdf-route",
-        "ingest_pdf_route": "/api/ingest-pdf",
-    }
-
 
 @app.post("/api/ingest-pdf")
 async def ingest_pdf(file: UploadFile = File(...)):
