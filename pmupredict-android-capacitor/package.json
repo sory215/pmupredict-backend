@@ -10,7 +10,7 @@
     "build": "npx cap sync android && cd android && ./gradlew assembleDebug"
   },
   "dependencies": {
-    "@capacitor/android": "8.4.2",
+    "@capacitor/android": "8.4.3",
     "@capacitor/core": "8.4.2"
   },
   "devDependencies": {
