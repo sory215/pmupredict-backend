@@ -391,9 +391,11 @@ def predictions_today():
             "course_id,partant_id,score,confiance,modele"
         ).in_("course_id", course_ids).execute().data or []
         partant_ids = list({p["partant_id"] for p in predictions})
-        partants_data = supabase.table("partants").select(
-            "id,numero,cheval_nom,jockey,cote_actuelle,cote_matin,musique,est_deferre"
-        ).in_("id", partant_ids).execute().data or []
+        partants_data = []
+        for _i in range(0, len(partant_ids), 40):
+            partants_data += supabase.table("partants").select(
+                "id,numero,cheval_nom,jockey,cote_actuelle,cote_matin,musique,est_deferre"
+            ).in_("id", partant_ids[_i:_i + 40]).execute().data or []
         partant_by_id = {p["id"]: p for p in partants_data}
         preds_by_course = {}
         for p in predictions:
